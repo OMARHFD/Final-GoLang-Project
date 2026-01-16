@@ -1,32 +1,24 @@
 package main
 
 import (
-	"fmt"
+	"log"
+	"net/http"
+	"net/url"
 )
 
+//"net/http/httputil"
+
 func main() {
-	backends := []bool{false, false, false, false, true}
-	fmt.Println(test(0, backends))
-
-}
-
-func test(c int, backends []bool) bool {
-	counter := 0
-	initialValue := c
-	for !backends[c] && counter < (len(backends)) {
-		c++
-		counter++
-		c = c % (len(backends))
-
+	// requesting doing a like client behavior
+	requestUrl, err := url.Parse("http://localhost:8081")
+	if err != nil {
+		log.Fatal("the service you are requesting isn t available :( ")
 	}
 
-	if backends[c] {
-		fmt.Println(c)
-		return backends[c]
-	} else {
-		c = initialValue
-		fmt.Println("error handling")
-		return false
-	}
+	// the reverse proxy work
+	var reverseProxy ReverseProxy
+	//reverseProxy1 := httputil.NewSingleHostReverseProxy(requestUrl)
+
+	http.ListenAndServe(":8080")
 
 }
