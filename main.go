@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 )
 
@@ -14,11 +15,16 @@ func main() {
 	if err != nil {
 		log.Fatal("the service you are requesting isn t available :( ")
 	}
+	var req *http.Request
 
-	// the reverse proxy work
-	var reverseProxy ReverseProxy
-	//reverseProxy1 := httputil.NewSingleHostReverseProxy(requestUrl)
+	var reverseProxy httputil.ReverseProxy
+	// set req Host, URL and Request URI to forward a request to the origin server
+	req.Host = requestUrl.Host
+	req.URL.Host = requestUrl.Host
+	req.URL.Scheme = requestUrl.Scheme
+	req.RequestURI = ""
+	reverseProxy.Director(req)
 
-	http.ListenAndServe(":8080")
+	http.ListenAndServe(":8080", nil)
 
 }
