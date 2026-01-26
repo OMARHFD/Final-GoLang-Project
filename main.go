@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"time"
 )
 
 func main() {
@@ -40,7 +41,7 @@ func main() {
 			backend := s.GetNextValidPeer()
 			req.URL.Scheme = backend.URL.Scheme
 			req.URL.Host = backend.URL.Host
-			println("Forwarding request to:", backend.URL.String())
+			//println("Forwarding request to:", backend.URL.String())
 		},
 		// this is really non sense here but it can help me change the response form
 		ModifyResponse: func(resp *http.Response) error {
@@ -48,13 +49,40 @@ func main() {
 			if err != nil {
 				return err
 			}
-			fmt.Println("Backend response :", string(bodyBytes))
+			//fmt.Println("Backend response :", string(bodyBytes))
 			// reset the body so the client still receives it
 			resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 			return nil
 		},
 	}
 
+	//Health checker go routine
+
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for range ticker.C {
+			for _, backend := range s.Backends {
+				backend.mux.Lock()
+				resp, err := http.Get(backend.URL.String())
+				if err != nil {
+					backend.Alive = false
+					backend.mux.Unlock()
+					fmt.Println("backend ", backend.URL.String(), " is not alive")
+					continue
+				}
+				backend.Alive = true
+				backend.mux.Unlock()
+				fmt.Println("backend ", backend.URL.String(), " is alive")
+				resp.Body.Close()
+
+			}
+
+		}
+
+	}()
+
 	// launching the main server
 	http.ListenAndServe(":8087", ProxyObject)
+
 }
