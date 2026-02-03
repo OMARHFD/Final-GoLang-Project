@@ -1,10 +1,15 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	"sync"
+)
 
 type ServerPool struct {
-	Backends []*Backend `json:"backends"`
-	Current  uint64     `json:"current"` // Used for Round-Robin
+	Backends      []*Backend `json:"backends"`
+	Current       uint64     `json:"current"` // Used for Round-Robin
+	BackendsMutex sync.RWMutex
 }
 
 func (s *ServerPool) GetNextValidPeer() *Backend {
